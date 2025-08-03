@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: gas-tracker
+    name: your-service-name
     runtime: python
     pythonVersion: "3.9.16"
     buildCommand: "pip install -r requirements.txt"
