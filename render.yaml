@@ -2,6 +2,6 @@ services:
   - type: web
     name: gas-tracker
     runtime: python
-    pythonVersion: "3.9.16"  # Explicitly locked
-    buildCommand: "pip install -r requirements.txt"
+    pythonVersion: "3.9.16"
+    buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port 8000"
