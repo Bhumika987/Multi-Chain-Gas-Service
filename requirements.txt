@@ -1,25 +1,19 @@
-# Core Web3 Stack
-web3==5.31.3
-eth-account==0.5.9
-eth-abi==2.2.0
-eth-hash==0.3.2
-eth-typing==2.3.0
-eth-utils==1.10.0
-hexbytes==0.2.2
 
-# FastAPI Stack
-fastapi==0.95.2
-uvicorn==0.22.0
-pydantic==1.10.7
+fastapi==0.116.1
+uvicorn==0.35.0
+web3==7.12.1
+python-dotenv==1.1.1
+pydantic==2.11.7
+requests==2.32.4
+cachetools==6.1.0
+pandas==2.2.3
 slowapi==0.1.9
-
-# Supporting Packages
-python-dotenv==1.0.0
-requests==2.28.2
-websockets==10.4
-aiohttp==3.8.4
-aiofiles==22.1.0
-
-# Build Tools
-setuptools==65.5.1
-pip==23.0.1
+eth-account==0.14.0  # Required by web3
+eth-abi==4.5.0       # Required by web3
+eth-hash==0.7.0      # Required by web3
+eth-typing==3.5.4    # Required by web3
+eth-utils==2.4.0     # Required by web3
+hexbytes==1.0.0      # Required by web3
+websockets==12.0     # Required by web3
+aiohttp==3.9.5       # Required by web3
+aiofiles==23.2.1  
