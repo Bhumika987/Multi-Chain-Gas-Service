@@ -11,7 +11,7 @@ slowapi==0.1.9
 # Web3 (Python 3.9 compatible)
 web3==6.15.0
 eth-account==0.5.9
-eth-abi==2.2.0  # Changed to match web3's requirement
+eth-abi>=4.0.0  # Changed to match web3's requirement
 eth-hash==0.3.2
 eth-typing==2.3.0
 eth-utils==1.10.0
