@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-"# Multi-Chain Gas Service" 
-=======
 # MultiChain-GAS-Service-API
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -32,14 +29,9 @@ python src/main.py
 ## License
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
----
-
-## Contributing
-Pull requests are welcome! For major changes, please open an issue first.
 
 ## Support
 For questions or issues, open a GitHub Issue or contact [@Bhumika987](https://github.com/Bhumika987).
 
 
 Let me know if you'd like to add specific technical details or screenshots! 🚀
->>>>>>> c22dc3370c7e5e806f6a001d533fd2685163a608
