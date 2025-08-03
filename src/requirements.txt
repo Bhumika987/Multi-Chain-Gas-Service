@@ -1,0 +1,22 @@
+# Core
+fastapi==0.68.0
+uvicorn==0.15.0
+python-dotenv==1.0.0
+
+# Web3 with pinned compatible versions
+web3==5.31.3
+eth-abi==2.2.0
+eth-account==0.5.9
+eth-typing==2.3.0
+eth-hash==0.3.2
+eth-utils==1.10.0
+hexbytes==0.2.2
+
+# Supporting packages
+requests==2.28.1
+cachetools==5.3.0
+pydantic==1.10.7
+pandas==2.2.3
+slowapi==0.1.9
+websockets==9.1   # Required by web3
+aiohttp==3.9.5 
