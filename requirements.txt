@@ -10,7 +10,7 @@ slowapi==0.1.9
 
 # Web3 (Python 3.9 compatible)
 web3==6.15.0
-eth-account==0.5.9
+eth-account==0.8.0
 eth-abi>=4.0.0  # Changed to match web3's requirement
 eth-hash==0.3.2
 eth-typing==2.3.0
@@ -20,3 +20,5 @@ websockets==9.1
 aiohttp==3.9.5
 aiofiles==22.1.0
 parsimonious==0.10.0 
+setuptools==68.2.2
+pip==25.2
