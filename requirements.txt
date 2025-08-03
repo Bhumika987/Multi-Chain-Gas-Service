@@ -8,9 +8,9 @@ cachetools==6.1.0
 pandas==2.2.3
 slowapi==0.1.9
 eth-account==0.13.7
-eth-abi==4.2.1  # Changed from 4.5.0
+eth-abi==4.2.1
 eth-hash==0.7.0
-eth-typing==3.5.4
+eth-typing>=3.5.0,<4.0.0  # Changed from fixed version
 eth-utils==2.4.0
 hexbytes==1.0.0
 websockets==12.0
