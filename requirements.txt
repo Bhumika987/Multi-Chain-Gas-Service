@@ -1,18 +1,21 @@
+# Core dependencies
 fastapi==0.116.1
 uvicorn==0.35.0
-web3==7.12.1
 python-dotenv==1.1.1
 pydantic==2.11.7
 requests==2.32.4
 cachetools==6.1.0
 pandas==2.2.3
 slowapi==0.1.9
-eth-account==0.13.7
-eth-abi==4.2.1
-eth-hash==0.7.0
-eth-typing>=3.5.0,<4.0.0  # Changed from fixed version
-eth-utils==2.4.0
-hexbytes==1.0.0
-websockets==12.0
-aiohttp==3.9.5
+
+# Web3 compatible versions
+web3==6.15.0  # Downgraded for Python 3.9 compatibility
+eth-account==0.8.0
+eth-abi==3.0.1
+eth-hash==0.5.1
+eth-typing==3.4.0
+eth-utils==2.2.0
+hexbytes==0.3.0
+websockets==10.4
+aiohttp==3.8.6
 aiofiles==23.2.1
