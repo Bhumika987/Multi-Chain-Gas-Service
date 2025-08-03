@@ -17,5 +17,5 @@ eth-typing==2.3.0
 eth-utils==1.10.0
 hexbytes==0.2.2
 websockets==9.1
-aiohttp==3.8.1
+aiohttp==3.9.5
 aiofiles==22.1.0
