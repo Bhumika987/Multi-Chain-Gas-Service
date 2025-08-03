@@ -17,3 +17,4 @@ hexbytes==1.0.0      # Required by web3
 websockets==12.0     # Required by web3
 aiohttp==3.9.5       # Required by web3
 aiofiles==23.2.1  
+setuptools>=65.5.1
