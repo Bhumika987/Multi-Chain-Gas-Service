@@ -1,6 +1,3 @@
-Based on the provided files and current README draft, I'll create a more comprehensive and accurate README.md file for your Multi-Chain Gas Tracker API:
-
-```markdown
 # Multi-Chain Gas Tracker API 🌐⛽
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
