@@ -1,1 +1,1 @@
-# MultiChain-GAS-API
+# MultiChain-GAS-Service-API
