@@ -79,6 +79,18 @@ The dashboard will be available at `http://localhost:8000/ui`
 | Polygon zkEVM | 1101 | ETH | ✅ |
 | Moonbeam | 1284 | GLMR | ✅ |
 
+## ⚡ Performance
+
+- **Response Times**: <50ms for most gas price queries
+- **Cache Efficiency**: 
+  - ETH Price: 60s TTL
+  - Gas Prices: 15s TTL
+  - Historical Data: 5min TTL
+- **Rate Limits**:
+  - 60 requests/minute (health check)
+  - 30 requests/minute (gas prices)
+  - 10 requests/minute (simulations)
+    
 ## 📂 Project Structure
 
 ```
