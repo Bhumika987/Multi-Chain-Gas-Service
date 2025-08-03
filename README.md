@@ -1,31 +1,37 @@
-# Multi-Chain Gas Service API 🌐⛽
+Based on the provided files and current README draft, I'll create a more comprehensive and accurate README.md file for your Multi-Chain Gas Tracker API:
+
+```markdown
+# Multi-Chain Gas Tracker API 🌐⛽
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Web3.py](https://img.shields.io/badge/Web3.py-6.x-brightgreen.svg)](https://web3py.readthedocs.io/)
+[![Web3.py](https://img.shields.io/badge/Web3.py-7.x-brightgreen.svg)](https://web3py.readthedocs.io/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.116-blue)](https://fastapi.tiangolo.com/)
 
-A real-time multi-chain gas fee monitoring service with optimal transaction pricing recommendations.
+A comprehensive API for real-time gas tracking across multiple EVM-compatible chains with EIP-1559 support, historical data, and transaction simulation.
 
-![Multi-Chain Gas Service Demo](https://via.placeholder.com/800x400?text=Demo+GIF+or+Screenshot) *(Replace with actual screenshot)*
+![API Dashboard Screenshot](https://via.placeholder.com/800x400?text=API+Dashboard+Screenshot)
 
 ## ✨ Key Features
-| Feature | Supported Chains | Description |
-|---------|------------------|-------------|
-| **Real-time Gas Tracking** | Ethereum, Base, Fantom | Live gas price updates every 15s |
-| **Smart Fee Estimation** | All EVM chains | AI-powered optimal gas price suggestions |
-| **Transaction Simulation** | Ethereum, Polygon | Pre-transaction cost preview |
-| **API Endpoints** | All supported chains | RESTful API for integration |
+
+- **Multi-Chain Support**: Ethereum, Base, zkSync Era, Avalanche, Fantom, Polygon zkEVM, Moonbeam
+- **EIP-1559 Support**: Base fee and priority fee calculations
+- **Historical Data**: Track base fee trends over time
+- **L2 Fee Breakdown**: Detailed L1/L2 fee analysis for Layer 2 chains
+- **Transaction Simulation**: Dry-run transactions before sending
+- **Rate Limited API**: Built-in request throttling
+- **Web Dashboard**: Interactive UI for testing endpoints
 
 ## 🛠️ Installation
 
 ### Prerequisites
 - Python 3.8+
-- Node.js (for frontend)
-- MetaMask (for testing)
+- SQLite (for historical data storage)
 
 ```bash
-# Clone with submodules
-git clone --recursive https://github.com/Bhumika987/Multi-Chain-Gas-Service.git
-cd Multi-Chain-Gas-Service
+# Clone repository
+git clone https://github.com/Bhumika987/Multi-Chain-Gas-Tracker.git
+cd Multi-Chain-Gas-Tracker
 
 # Set up virtual environment
 python -m venv venv
@@ -35,42 +41,68 @@ venv\Scripts\activate     # Windows
 # Install dependencies
 pip install -r requirements.txt
 
-# Environment Setup
+# Set up environment variables
 cp .env.example .env
+# Edit .env with your Infura/API keys
 ```
 
 ## 🚀 Usage
 
-### Running the Service
+### Running the API Server
 ```bash
-python src/main.py --chain ethereum --interval 30
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Available Arguments
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--chain` | `ethereum` | Chain to monitor (ethereum/base/fantom) |
-| `--interval` | `15` | Price refresh interval (seconds) |
-| `--alert` | `None` | Email for price alerts |
+The API will be available at `http://localhost:8000` with interactive docs at `http://localhost:8000/docs`
 
-### API Endpoints
-```http
-GET /api/v1/gas/ethereum
-GET /api/v1/gas/base/optimal
+### Accessing the Web UI
+The dashboard will be available at `http://localhost:8000/ui`
+
+## 📊 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Service health check |
+| `/chains` | GET | List all supported chains |
+| `/chain-info` | GET | Get chain metadata |
+| `/gas` | GET | Current gas prices |
+| `/estimate-fee` | GET | Transaction fee estimation |
+| `/estimate-fee/l2-breakdown` | GET | L2 fee breakdown |
+| `/historical/base-fee` | GET | Historical base fee data |
+| `/balance/{address}` | GET | Native token balance |
+| `/simulate` | POST | Transaction simulation |
+
+## 🌐 Supported Chains
+
+| Chain | Chain ID | Native Token | EIP-1559 |
+|-------|----------|--------------|----------|
+| Ethereum | 1 | ETH | ✅ |
+| Base | 8453 | ETH | ✅ |
+| zkSync Era | 324 | ETH | ✅|
+| Avalanche C-Chain | 43114 | AVAX | ✅ |
+| Fantom | 250 | FTM | ✅ |
+| Polygon zkEVM | 1101 | ETH | ✅ |
+| Moonbeam | 1284 | GLMR | ✅ |
+
+## 📂 Project Structure
+
 ```
-
-## 📊 Project Structure
+multi-chain-gas-tracker/
+├── src/
+│   ├── main.py                # FastAPI application
+│   ├── poa_middleware.py      # Proof-of-Authority middleware
+│   ├── chains.json            # Chain configurations
+│   └── historical_gas.db      # SQLite database for historical data
+├── static/                    # Web UI assets
+│   └── index.html             # Dashboard HTML
+├── .env                       # Environment variables
+├── .env.example               # Example env file
+├── requirements.txt           # Python dependencies
+└── README.md                  # This file
 ```
-.
-├── src/                  # Core service logic
-│   ├── chains/          # Chain-specific adapters
-│   ├── estimators/      # Gas price algorithms
-│   └── main.py          # Entry point
-├── static/              # Web interface
-│   ├── index.html       # Dashboard
-
 
 ## 🤝 Contributing
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
@@ -78,9 +110,11 @@ GET /api/v1/gas/base/optimal
 5. Open a Pull Request
 
 ## 📜 License
+
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📬 Contact
+
 Bhumika - [@Bhumika987](https://github.com/Bhumika987) - bhumika@example.com
 
-🔗 **Project Link**: [https://github.com/Bhumika987/Multi-Chain-Gas-Service](https://github.com/Bhumika987/Multi-Chain-Gas-Service)
+🔗 **Project Link**: [https://github.com/Bhumika987/Multi-Chain-Gas-Tracker](https://github.com/Bhumika987/Multi-Chain-Gas-Tracker)
