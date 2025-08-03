@@ -7,9 +7,6 @@
 
 A comprehensive API for real-time gas tracking across multiple EVM-compatible chains with EIP-1559 support, historical data, and transaction simulation.
 
-![API Dashboard Screenshot](![Uploading WhatsApp Image 2025-07-30 at 15.17.12_2559e710.jpg…]())
-
-
 ## ✨ Key Features
 
 - **Multi-Chain Support**: Ethereum, Base, zkSync Era, Avalanche, Fantom, Polygon zkEVM, Moonbeam
@@ -113,6 +110,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📬 Contact
 
-Bhumika - [@Bhumika987](https://github.com/Bhumika987) - bhumika@example.com
-
+Bhumika - [@Bhumika987](https://github.com/Bhumika987) 
 🔗 **Project Link**: [https://github.com/Bhumika987/Multi-Chain-Gas-Tracker](https://github.com/Bhumika987/Multi-Chain-Gas-Tracker)
