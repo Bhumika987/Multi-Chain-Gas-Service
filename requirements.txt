@@ -7,7 +7,7 @@ requests==2.32.4
 cachetools==6.1.0
 pandas==2.2.3
 slowapi==0.1.9
-eth-account==0.14.0  # Required by web3
+eth-account==0.13.7  # Required by web3
 eth-abi==4.5.0       # Required by web3
 eth-hash==0.7.0      # Required by web3
 eth-typing==3.5.4    # Required by web3
