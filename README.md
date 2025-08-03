@@ -6,7 +6,7 @@ A service to monitor and manage gas fees across multiple blockchain networks.
 ---
 
 ## Features
-- **Multi-Chain Support**: Works with Ethereum, Binance Smart Chain, Polygon, and more.
+- **Multi-Chain Support**: Works with Ethereum, Base, Fantom, and more.
 - **Gas Optimization**: Recommends optimal gas fees for transactions.
 - **Real-Time Data**: Fetches live gas prices from blockchain networks.
 
