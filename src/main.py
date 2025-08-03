@@ -463,6 +463,11 @@ async def health_check(request: Request):
         }
     }
 
+@app.get("/health")
+def render_health_check():
+    """Simplified health check for Render monitoring"""
+    return {"status": "ok"}
+
 
 @app.get("/chains", response_model=SupportedChainsResponse, summary="List supported chains", tags=["Chain Info"])
 async def get_supported_chains():
