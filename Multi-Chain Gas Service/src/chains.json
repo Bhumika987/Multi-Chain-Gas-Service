@@ -1,0 +1,67 @@
+{
+  "chains": [
+    {
+      "chainId": 1,
+      "chainName": "Ethereum",
+      "nativeToken": "ETH",
+      "rpcUrl": "https://mainnet.infura.io/v3/92480f9743b84c5faa68c5654985da9f",
+      "supportsEIP1559": true,
+      "isL2": false,
+      "isPOA": false
+    },
+    {
+      "chainId": 8453,
+      "chainName": "Base",
+      "nativeToken": "ETH",
+      "rpcUrl": "https://mainnet.base.org",
+      "supportsEIP1559": true,
+      "isL2": true,
+      "isPOA": false
+    },
+    {
+      "chainId": 324,
+      "chainName": "zkSync Era",
+      "nativeToken": "ETH",
+      "rpcUrl": "https://mainnet.era.zksync.io",
+      "supportsEIP1559": false,
+      "isL2": true,
+      "isPOA": false
+    },
+    {
+      "chainId": 43114,
+      "chainName": "Avalanche C-Chain",
+      "nativeToken": "AVAX",
+      "rpcUrl": "https://api.avax.network/ext/bc/C/rpc",
+      "supportsEIP1559": true,
+      "isL2": false,
+      "isPOA": false
+    },
+    {
+      "chainId": 250,
+      "chainName": "Fantom",
+      "nativeToken": "FTM",
+      "rpcUrl": "https://rpcapi.fantom.network",
+      "supportsEIP1559": false,
+      "isL2": false,
+      "isPOA": false
+    },
+    {
+      "chainId": 1101,
+      "chainName": "Polygon zkEVM",
+      "nativeToken": "ETH",
+      "rpcUrl": "https://zkevm-rpc.com",
+      "supportsEIP1559": true,
+      "isL2": true,
+      "isPOA": false
+    },
+    {
+      "chainId": 1284,
+      "chainName": "Moonbeam",
+      "nativeToken": "GLMR",
+      "rpcUrl": "https://rpc.api.moonbeam.network",
+      "supportsEIP1559": false,
+      "isL2": false,
+      "isPOA": false
+    }
+  ]
+}

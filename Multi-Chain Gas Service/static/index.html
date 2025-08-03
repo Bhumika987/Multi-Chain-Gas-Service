@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Chain Gas Tracker</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --dark: #1b263b;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #f94144;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .api-description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .endpoint {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9fafc;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .endpoint h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .endpoint p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .chain-selector {
+            margin-bottom: 20px;
+        }
+        
+        .chain-selector select {
+            max-width: 300px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Multi-Chain Gas Tracker API</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <p class="api-description">API for gas tracking with EIP-1559, historical data, and L2 support</p>
+        
+        <div class="chain-selector">
+            <label for="chain-select">Select Chain:</label>
+            <select id="chain-select">
+                <option value="1">Ethereum</option>
+                <option value="8453">Base</option>
+                <option value="324">zkSync Era</option>
+                <option value="43114">Avalanche C-Chain</option>
+                <option value="250">Fantom</option>
+                <option value="1101">Polygon zkEVM</option>
+                <option value="1284">Moonbeam</option>
+            </select>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="health">Health Check</div>
+            <div class="tab" data-tab="chain">Chain Info</div>
+            <div class="tab" data-tab="gas">Gas Data</div>
+            <div class="tab" data-tab="tx">Transaction</div>
+            <div class="tab" data-tab="l2">L2 Support</div>
+            <div class="tab" data-tab="history">Historical Data</div>
+            <div class="tab" data-tab="wallet">Wallet</div>
+            <div class="tab" data-tab="simulate">Transaction Simulation</div>
+        </div>
+        
+        <!-- Health Check Tab -->
+        <div id="health" class="tab-content active">
+            <div class="section">
+                <h2>Health Check</h2>
+                <div class="endpoint">
+                    <h3>GET /</h3>
+                    <p>Service health check endpoint</p>
+                    <button class="btn" onclick="checkHealth()">Test Endpoint</button>
+                    <div id="health-result" class="result-container hidden">
+                        <pre id="health-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chain Info Tab -->
+        <div id="chain" class="tab-content">
+            <div class="section">
+                <h2>Chain Info</h2>
+                <div class="endpoint">
+                    <h3>GET /chain-info</h3>
+                    <p>Get gas price and native token info for a chain</p>
+                    <div class="form-group">
+                        <label for="chain-name">Chain Name (optional):</label>
+                        <input type="text" id="chain-name" placeholder="e.g. Ethereum">
+                    </div>
+                    <div class="form-group">
+                        <label for="chain-id">Chain ID (optional):</label>
+                        <input type="number" id="chain-id" placeholder="e.g. 1">
+                    </div>
+                    <button class="btn" onclick="getChainInfo()">Get Chain Info</button>
+                    <div id="chain-info-result" class="result-container hidden">
+                        <pre id="chain-info-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gas Data Tab -->
+        <div id="gas" class="tab-content">
+            <div class="section">
+                <h2>Gas Data</h2>
+                <div class="endpoint">
+                    <h3>GET /gas</h3>
+                    <p>Fetch current network gas prices</p>
+                    <div class="form-group">
+                        <label for="gas-chain-id">Chain ID:</label>
+                        <input type="number" id="gas-chain-id" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="eip1559" checked> Include EIP-1559 data
+                        </label>
+                    </div>
+                    <button class="btn" onclick="getGasPrices()">Get Gas Prices</button>
+                    <div id="gas-result" class="result-container hidden">
+                        <pre id="gas-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction Tab -->
+        <div id="tx" class="tab-content">
+            <div class="section">
+                <h2>Transaction</h2>
+                <div class="endpoint">
+                    <h3>GET /estimate-fee</h3>
+                    <p>Estimate transaction fees for a specific chain</p>
+                    <div class="form-group">
+                        <label for="from-address">From Address:</label>
+                        <input type="text" id="from-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="to-address">To Address:</label>
+                        <input type="text" id="to-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="value">Value (wei):</label>
+                        <input type="number" id="value" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="data">Data (hex):</label>
+                        <input type="text" id="data" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-chain-id">Chain ID:</label>
+                        <input type="number" id="tx-chain-id" value="1">
+                    </div>
+                    <button class="btn" onclick="estimateFee()">Estimate Fee</button>
+                    <div id="fee-result" class="result-container hidden">
+                        <pre id="fee-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- L2 Support Tab -->
+        <div id="l2" class="tab-content">
+            <div class="section">
+                <h2>L2 Support</h2>
+                <div class="endpoint">
+                    <h3>GET /estimate-fee/l2-breakdown</h3>
+                    <p>Get detailed L2 fee breakdown (L1 security fee + L2 execution fee)</p>
+                    <div class="form-group">
+                        <label for="l2-from-address">From Address:</label>
+                        <input type="text" id="l2-from-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="l2-to-address">To Address:</label>
+                        <input type="text" id="l2-to-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="l2-chain-id">L2 Chain ID:</label>
+                        <select id="l2-chain-id">
+                            <option value="10">Optimism</option>
+                            <option value="42161">Arbitrum</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="l2-value">Value (wei):</label>
+                        <input type="number" id="l2-value" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="l2-data">Data (hex):</label>
+                        <input type="text" id="l2-data" placeholder="0x...">
+                    </div>
+                    <button class="btn" onclick="estimateL2Fee()">Estimate L2 Fee</button>
+                    <div id="l2-result" class="result-container hidden">
+                        <pre id="l2-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historical Data Tab -->
+        <div id="history" class="tab-content">
+            <div class="section">
+                <h2>Historical Data</h2>
+                <div class="endpoint">
+                    <h3>GET /historical/base-fee</h3>
+                    <p>Get historical base fee data for EIP-1559 chains</p>
+                    <div class="form-group">
+                        <label for="historical-chain-id">Chain ID:</label>
+                        <input type="number" id="historical-chain-id" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="hours">Time Window (hours, max 168):</label>
+                        <input type="number" id="hours" min="1" max="168" value="24">
+                    </div>
+                    <button class="btn" onclick="getHistoricalData()">Get Historical Data</button>
+                    <div id="historical-result" class="result-container hidden">
+                        <pre id="historical-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wallet Tab -->
+        <div id="wallet" class="tab-content">
+            <div class="section">
+                <h2>Wallet</h2>
+                <div class="endpoint">
+                    <h3>GET /balance/{address}</h3>
+                    <p>Get native token balance for an address on a specific chain</p>
+                    <div class="form-group">
+                        <label for="balance-address">Address:</label>
+                        <input type="text" id="balance-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="balance-chain-id">Chain ID:</label>
+                        <input type="number" id="balance-chain-id" value="1">
+                    </div>
+                    <button class="btn" onclick="checkBalance()">Check Balance</button>
+                    <div id="balance-result" class="result-container hidden">
+                        <pre id="balance-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction Simulation Tab -->
+        <div id="simulate" class="tab-content">
+            <div class="section">
+                <h2>Transaction Simulation</h2>
+                <div class="endpoint">
+                    <h3>POST /simulate</h3>
+                    <p>Simulate a transaction on a specific chain</p>
+                    <div class="form-group">
+                        <label for="sim-from-address">From Address:</label>
+                        <input type="text" id="sim-from-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-to-address">To Address:</label>
+                        <input type="text" id="sim-to-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-value">Value (wei):</label>
+                        <input type="number" id="sim-value" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-data">Data (hex):</label>
+                        <input type="text" id="sim-data" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-gas-limit">Gas Limit (optional):</label>
+                        <input type="number" id="sim-gas-limit">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-chain-id">Chain ID:</label>
+                        <input type="number" id="sim-chain-id" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-max-fee">Max Fee (optional, EIP-1559):</label>
+                        <input type="number" id="sim-max-fee">
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-max-priority-fee">Max Priority Fee (optional, EIP-1559):</label>
+                        <input type="number" id="sim-max-priority-fee">
+                    </div>
+                    <button class="btn" onclick="simulateTransaction()">Simulate Transaction</button>
+                    <div id="simulate-result" class="result-container hidden">
+                        <pre id="simulate-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // API Base URL
+        const API_BASE = 'http://localhost:8000';
+        
+        // Helper function to display API responses
+        function displayResponse(elementId, data) {
+            const container = document.getElementById(`${elementId}-result`);
+            const output = document.getElementById(`${elementId}-data`);
+            
+            output.textContent = JSON.stringify(data, null, 2);
+            container.classList.remove('hidden');
+        }
+        
+        // Health Check
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const data = await response.json();
+                displayResponse('health', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Chain Info
+        async function getChainInfo() {
+            const chainName = document.getElementById('chain-name').value;
+            const chainId = document.getElementById('chain-id').value;
+            
+            let url = `${API_BASE}/chain-info?`;
+            if (chainName) url += `chain_name=${encodeURIComponent(chainName)}&`;
+            if (chainId) url += `chain_id=${chainId}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                displayResponse('chain-info', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Gas Prices
+        async function getGasPrices() {
+            const chainId = document.getElementById('gas-chain-id').value;
+            const eip1559 = document.getElementById('eip1559').checked;
+            
+            try {
+                const response = await fetch(`${API_BASE}/gas?chain_id=${chainId}&eip1559=${eip1559}`);
+                const data = await response.json();
+                displayResponse('gas', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Estimate Fee
+        async function estimateFee() {
+            const fromAddress = document.getElementById('from-address').value;
+            const toAddress = document.getElementById('to-address').value;
+            const value = document.getElementById('value').value;
+            const data = document.getElementById('data').value;
+            const chainId = document.getElementById('tx-chain-id').value;
+            
+            let url = `${API_BASE}/estimate-fee?from_address=${fromAddress}&to_address=${toAddress}&value=${value}&chain_id=${chainId}`;
+            if (data) url += `&data=${encodeURIComponent(data)}`;
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                displayResponse('fee', result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Estimate L2 Fee
+        async function estimateL2Fee() {
+            const fromAddress = document.getElementById('l2-from-address').value;
+            const toAddress = document.getElementById('l2-to-address').value;
+            const value = document.getElementById('l2-value').value;
+            const data = document.getElementById('l2-data').value;
+            const chainId = document.getElementById('l2-chain-id').value;
+            
+            let url = `${API_BASE}/estimate-fee/l2-breakdown?from_address=${fromAddress}&to_address=${toAddress}&value=${value}&chain_id=${chainId}`;
+            if (data) url += `&data=${encodeURIComponent(data)}`;
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                displayResponse('l2', result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Historical Data
+        async function getHistoricalData() {
+            const chainId = document.getElementById('historical-chain-id').value;
+            const hours = document.getElementById('hours').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/historical/base-fee?chain_id=${chainId}&hours=${hours}`);
+                const data = await response.json();
+                displayResponse('historical', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Check Balance
+        async function checkBalance() {
+            const address = document.getElementById('balance-address').value;
+            const chainId = document.getElementById('balance-chain-id').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/balance/${address}?chain_id=${chainId}`);
+                const data = await response.json();
+                displayResponse('balance', data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Simulate Transaction
+        async function simulateTransaction() {
+            const fromAddress = document.getElementById('sim-from-address').value;
+            const toAddress = document.getElementById('sim-to-address').value;
+            const value = document.getElementById('sim-value').value;
+            const data = document.getElementById('sim-data').value;
+            const gasLimit = document.getElementById('sim-gas-limit').value;
+            const chainId = document.getElementById('sim-chain-id').value;
+            const maxFee = document.getElementById('sim-max-fee').value;
+            const maxPriorityFee = document.getElementById('sim-max-priority-fee').value;
+            
+            const payload = {
+                from_address: fromAddress,
+                to_address: toAddress,
+                value: parseInt(value),
+                chain_id: parseInt(chainId)
+            };
+            
+            if (data) payload.data = data;
+            if (gasLimit) payload.gas_limit = parseInt(gasLimit);
+            if (maxFee) payload.max_fee = parseInt(maxFee);
+            if (maxPriorityFee) payload.max_priority_fee = parseInt(maxPriorityFee);
+            
+            try {
+                const response = await fetch(`${API_BASE}/simulate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                displayResponse('simulate', result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
