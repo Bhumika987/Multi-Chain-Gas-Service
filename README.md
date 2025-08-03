@@ -1,4 +1,4 @@
-# Multi-Chain Gas Tracker API 🌐⛽
+# Multi-Chain Gas Service API 🌐⛽
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
@@ -25,8 +25,8 @@ A comprehensive API for real-time gas tracking across multiple EVM-compatible ch
 
 ```bash
 # Clone repository
-git clone https://github.com/Bhumika987/Multi-Chain-Gas-Tracker.git
-cd Multi-Chain-Gas-Tracker
+git clone https://github.com/Bhumika987/Multi-Chain-Gas-Service.git
+cd Multi-Chain-Gas-Service
 
 # Set up virtual environment
 python -m venv venv
@@ -94,7 +94,7 @@ The dashboard will be available at `http://localhost:8000/ui`
 ## 📂 Project Structure
 
 ```
-multi-chain-gas-tracker/
+Multi-Chain-Gas-Service/
 ├── src/
 │   ├── main.py                # FastAPI application
 │   ├── poa_middleware.py      # Proof-of-Authority middleware
