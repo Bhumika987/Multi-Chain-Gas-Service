@@ -26,12 +26,14 @@
             background-color: #f5f7fa;
             color: var(--dark);
             line-height: 1.6;
+            min-height: 100vh;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            width: 100%;
         }
         
         header {
@@ -44,7 +46,8 @@
         
         header h1 {
             text-align: center;
-            font-size: 2.5rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            padding: 0 15px;
         }
         
         .api-description {
@@ -52,12 +55,13 @@
             margin-bottom: 30px;
             color: #666;
             font-size: 1.1rem;
+            padding: 0 15px;
         }
         
         .section {
             background: white;
             border-radius: 8px;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 30px;
             box-shadow: 0 2px 15px rgba(0,0,0,0.05);
         }
@@ -67,6 +71,7 @@
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #eee;
+            font-size: 1.4rem;
         }
         
         .endpoint {
@@ -80,6 +85,7 @@
         .endpoint h3 {
             color: var(--secondary);
             margin-bottom: 10px;
+            font-size: 1.2rem;
         }
         
         .endpoint p {
@@ -91,18 +97,27 @@
             display: inline-block;
             background: var(--primary);
             color: white;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 4px;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 200px;
         }
         
         .btn:hover {
             background: var(--secondary);
             transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .result-container {
@@ -119,6 +134,7 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
         }
         
         .form-group {
@@ -137,10 +153,12 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+            max-width: 100%;
         }
         
         .chain-selector {
             margin-bottom: 20px;
+            padding: 0 15px;
         }
         
         .chain-selector select {
@@ -156,6 +174,7 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
             margin-left: 10px;
+            vertical-align: middle;
         }
         
         @keyframes spin {
@@ -170,12 +189,21 @@
             display: flex;
             margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+            padding: 0 15px;
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        .tab-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
         
         .tab {
-            padding: 10px 20px;
+            padding: 10px 15px;
             cursor: pointer;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            font-size: 0.9rem;
         }
         
         .tab.active {
@@ -189,6 +217,50 @@
         
         .tab-content.active {
             display: block;
+        }
+        
+        .error-message {
+            color: var(--danger);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+            
+            .endpoint {
+                padding: 12px;
+            }
+            
+            .btn {
+                max-width: 100%;
+            }
+            
+            .tab {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tab {
+                padding: 8px 10px;
+            }
+            
+            .section h2 {
+                font-size: 1.2rem;
+            }
+            
+            .endpoint h3 {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
@@ -233,7 +305,8 @@
                 <div class="endpoint">
                     <h3>GET /</h3>
                     <p>Service health check endpoint</p>
-                    <button class="btn" onclick="checkHealth()">Test Endpoint</button>
+                    <button class="btn" onclick="checkHealth()" id="health-btn">Test Endpoint</button>
+                    <div id="health-error" class="error-message hidden"></div>
                     <div id="health-result" class="result-container hidden">
                         <pre id="health-data"></pre>
                     </div>
@@ -256,7 +329,8 @@
                         <label for="chain-id">Chain ID (optional):</label>
                         <input type="number" id="chain-id" placeholder="e.g. 1">
                     </div>
-                    <button class="btn" onclick="getChainInfo()">Get Chain Info</button>
+                    <button class="btn" onclick="getChainInfo()" id="chain-info-btn">Get Chain Info</button>
+                    <div id="chain-info-error" class="error-message hidden"></div>
                     <div id="chain-info-result" class="result-container hidden">
                         <pre id="chain-info-data"></pre>
                     </div>
@@ -280,7 +354,8 @@
                             <input type="checkbox" id="eip1559" checked> Include EIP-1559 data
                         </label>
                     </div>
-                    <button class="btn" onclick="getGasPrices()">Get Gas Prices</button>
+                    <button class="btn" onclick="getGasPrices()" id="gas-btn">Get Gas Prices</button>
+                    <div id="gas-error" class="error-message hidden"></div>
                     <div id="gas-result" class="result-container hidden">
                         <pre id="gas-data"></pre>
                     </div>
@@ -315,7 +390,8 @@
                         <label for="tx-chain-id">Chain ID:</label>
                         <input type="number" id="tx-chain-id" value="1">
                     </div>
-                    <button class="btn" onclick="estimateFee()">Estimate Fee</button>
+                    <button class="btn" onclick="estimateFee()" id="fee-btn">Estimate Fee</button>
+                    <div id="fee-error" class="error-message hidden"></div>
                     <div id="fee-result" class="result-container hidden">
                         <pre id="fee-data"></pre>
                     </div>
@@ -353,7 +429,8 @@
                         <label for="l2-data">Data (hex):</label>
                         <input type="text" id="l2-data" placeholder="0x...">
                     </div>
-                    <button class="btn" onclick="estimateL2Fee()">Estimate L2 Fee</button>
+                    <button class="btn" onclick="estimateL2Fee()" id="l2-btn">Estimate L2 Fee</button>
+                    <div id="l2-error" class="error-message hidden"></div>
                     <div id="l2-result" class="result-container hidden">
                         <pre id="l2-data"></pre>
                     </div>
@@ -376,7 +453,8 @@
                         <label for="hours">Time Window (hours, max 168):</label>
                         <input type="number" id="hours" min="1" max="168" value="24">
                     </div>
-                    <button class="btn" onclick="getHistoricalData()">Get Historical Data</button>
+                    <button class="btn" onclick="getHistoricalData()" id="historical-btn">Get Historical Data</button>
+                    <div id="historical-error" class="error-message hidden"></div>
                     <div id="historical-result" class="result-container hidden">
                         <pre id="historical-data"></pre>
                     </div>
@@ -399,7 +477,8 @@
                         <label for="balance-chain-id">Chain ID:</label>
                         <input type="number" id="balance-chain-id" value="1">
                     </div>
-                    <button class="btn" onclick="checkBalance()">Check Balance</button>
+                    <button class="btn" onclick="checkBalance()" id="balance-btn">Check Balance</button>
+                    <div id="balance-error" class="error-message hidden"></div>
                     <div id="balance-result" class="result-container hidden">
                         <pre id="balance-data"></pre>
                     </div>
@@ -446,7 +525,8 @@
                         <label for="sim-max-priority-fee">Max Priority Fee (optional, EIP-1559):</label>
                         <input type="number" id="sim-max-priority-fee">
                     </div>
-                    <button class="btn" onclick="simulateTransaction()">Simulate Transaction</button>
+                    <button class="btn" onclick="simulateTransaction()" id="simulate-btn">Simulate Transaction</button>
+                    <div id="simulate-error" class="error-message hidden"></div>
                     <div id="simulate-result" class="result-container hidden">
                         <pre id="simulate-data"></pre>
                     </div>
@@ -456,6 +536,9 @@
     </div>
 
     <script>
+        // API Base URL - Updated to your Render URL
+        const API_BASE = 'https://multi-chain-gas-service.onrender.com';
+        
         // Tab switching functionality
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -470,131 +553,229 @@
             });
         });
         
-        // API Base URL
-        const API_BASE = 'http://localhost:8000';
+        // Helper function to show loading state
+        function setLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.innerHTML = btn.textContent + ' <span class="loading"></span>';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.textContent;
+            }
+        }
         
         // Helper function to display API responses
         function displayResponse(elementId, data) {
             const container = document.getElementById(`${elementId}-result`);
             const output = document.getElementById(`${elementId}-data`);
+            const errorElement = document.getElementById(`${elementId}-error`);
             
+            errorElement.classList.add('hidden');
             output.textContent = JSON.stringify(data, null, 2);
             container.classList.remove('hidden');
         }
         
+        // Helper function to display errors
+        function displayError(elementId, error) {
+            const errorElement = document.getElementById(`${elementId}-error`);
+            const container = document.getElementById(`${elementId}-result`);
+            
+            errorElement.textContent = error.message || 'An error occurred';
+            errorElement.classList.remove('hidden');
+            if (container) container.classList.add('hidden');
+            
+            console.error('API Error:', error);
+        }
+        
         // Health Check
         async function checkHealth() {
+            const buttonId = 'health-btn';
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(`${API_BASE}/`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 displayResponse('health', data);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('health', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Chain Info
         async function getChainInfo() {
+            const buttonId = 'chain-info-btn';
             const chainName = document.getElementById('chain-name').value;
             const chainId = document.getElementById('chain-id').value;
+            
+            if (!chainName && !chainId) {
+                displayError('chain-info', new Error('Please provide either chain name or chain ID'));
+                return;
+            }
             
             let url = `${API_BASE}/chain-info?`;
             if (chainName) url += `chain_name=${encodeURIComponent(chainName)}&`;
             if (chainId) url += `chain_id=${chainId}`;
             
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 displayResponse('chain-info', data);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('chain-info', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Gas Prices
         async function getGasPrices() {
+            const buttonId = 'gas-btn';
             const chainId = document.getElementById('gas-chain-id').value;
             const eip1559 = document.getElementById('eip1559').checked;
             
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(`${API_BASE}/gas?chain_id=${chainId}&eip1559=${eip1559}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 displayResponse('gas', data);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('gas', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Estimate Fee
         async function estimateFee() {
+            const buttonId = 'fee-btn';
             const fromAddress = document.getElementById('from-address').value;
             const toAddress = document.getElementById('to-address').value;
             const value = document.getElementById('value').value;
             const data = document.getElementById('data').value;
             const chainId = document.getElementById('tx-chain-id').value;
             
+            if (!fromAddress || !toAddress) {
+                displayError('fee', new Error('From and To addresses are required'));
+                return;
+            }
+            
             let url = `${API_BASE}/estimate-fee?from_address=${fromAddress}&to_address=${toAddress}&value=${value}&chain_id=${chainId}`;
             if (data) url += `&data=${encodeURIComponent(data)}`;
             
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const result = await response.json();
                 displayResponse('fee', result);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('fee', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Estimate L2 Fee
         async function estimateL2Fee() {
+            const buttonId = 'l2-btn';
             const fromAddress = document.getElementById('l2-from-address').value;
             const toAddress = document.getElementById('l2-to-address').value;
             const value = document.getElementById('l2-value').value;
             const data = document.getElementById('l2-data').value;
             const chainId = document.getElementById('l2-chain-id').value;
             
+            if (!fromAddress || !toAddress) {
+                displayError('l2', new Error('From and To addresses are required'));
+                return;
+            }
+            
             let url = `${API_BASE}/estimate-fee/l2-breakdown?from_address=${fromAddress}&to_address=${toAddress}&value=${value}&chain_id=${chainId}`;
             if (data) url += `&data=${encodeURIComponent(data)}`;
             
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const result = await response.json();
                 displayResponse('l2', result);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('l2', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Historical Data
         async function getHistoricalData() {
+            const buttonId = 'historical-btn';
             const chainId = document.getElementById('historical-chain-id').value;
             const hours = document.getElementById('hours').value;
             
+            if (hours < 1 || hours > 168) {
+                displayError('historical', new Error('Hours must be between 1 and 168'));
+                return;
+            }
+            
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(`${API_BASE}/historical/base-fee?chain_id=${chainId}&hours=${hours}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 displayResponse('historical', data);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('historical', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Check Balance
         async function checkBalance() {
+            const buttonId = 'balance-btn';
             const address = document.getElementById('balance-address').value;
             const chainId = document.getElementById('balance-chain-id').value;
             
+            if (!address) {
+                displayError('balance', new Error('Address is required'));
+                return;
+            }
+            
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(`${API_BASE}/balance/${address}?chain_id=${chainId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 displayResponse('balance', data);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('balance', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
         
         // Simulate Transaction
         async function simulateTransaction() {
+            const buttonId = 'simulate-btn';
             const fromAddress = document.getElementById('sim-from-address').value;
             const toAddress = document.getElementById('sim-to-address').value;
             const value = document.getElementById('sim-value').value;
@@ -603,6 +784,11 @@
             const chainId = document.getElementById('sim-chain-id').value;
             const maxFee = document.getElementById('sim-max-fee').value;
             const maxPriorityFee = document.getElementById('sim-max-priority-fee').value;
+            
+            if (!fromAddress || !toAddress) {
+                displayError('simulate', new Error('From and To addresses are required'));
+                return;
+            }
             
             const payload = {
                 from_address: fromAddress,
@@ -617,6 +803,7 @@
             if (maxPriorityFee) payload.max_priority_fee = parseInt(maxPriorityFee);
             
             try {
+                setLoading(buttonId, true);
                 const response = await fetch(`${API_BASE}/simulate`, {
                     method: 'POST',
                     headers: {
@@ -624,12 +811,37 @@
                     },
                     body: JSON.stringify(payload)
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const result = await response.json();
                 displayResponse('simulate', result);
             } catch (error) {
-                console.error('Error:', error);
+                displayError('simulate', error);
+            } finally {
+                setLoading(buttonId, false);
             }
         }
+        
+        // Initialize the default chain selection
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default values for chain IDs in forms
+            document.getElementById('gas-chain-id').value = document.getElementById('chain-select').value;
+            document.getElementById('tx-chain-id').value = document.getElementById('chain-select').value;
+            document.getElementById('historical-chain-id').value = document.getElementById('chain-select').value;
+            document.getElementById('balance-chain-id').value = document.getElementById('chain-select').value;
+            document.getElementById('sim-chain-id').value = document.getElementById('chain-select').value;
+            
+            // Update chain IDs when the selector changes
+            document.getElementById('chain-select').addEventListener('change', (e) => {
+                const chainId = e.target.value;
+                document.getElementById('gas-chain-id').value = chainId;
+                document.getElementById('tx-chain-id').value = chainId;
+                document.getElementById('historical-chain-id').value = chainId;
+                document.getElementById('balance-chain-id').value = chainId;
+                document.getElementById('sim-chain-id').value = chainId;
+            });
+        });
     </script>
 </body>
 </html>
