@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
     for chain in CHAINS:
         try:
             w3 = get_web3_connection(chain["chainId"])
-            if w3.is_connected():
+            if w3.isConnected():
                 supports_eip1559 = 'baseFeePerGas' in w3.eth.get_block('latest')
                 print(f"✅ Connected to {chain['chainName']} (ID: {chain['chainId']})")
                 print(f"    EIP-1559 Support: {'Yes' if supports_eip1559 else 'No'}")
@@ -265,13 +265,15 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
    
     for attempt in range(3):
         try:
-            w3 = Web3(Web3.HTTPProvider(rpc_url))
+            w3 = Web3(Web3.HTTPProvider(rpc_url),
+                     request_kwargs={'timeout': 10} ))
            
-            if w3.is_connected():
+            if w3.isConnected():
                 return w3
             time.sleep(1)
         except Exception as e:
             print(f"Connection attempt {attempt + 1} failed: {str(e)}")
+            time.sleep(2 ** attempt) 
     raise ConnectionError(f"Could not connect to chain {chain_id} at {rpc_url}")
        
 def get_eth_usd_price() -> Optional[float]:
