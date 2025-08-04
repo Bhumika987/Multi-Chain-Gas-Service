@@ -20,3 +20,4 @@ pandas==2.2.3
 slowapi==0.1.9
 websockets==9.1   # Required by web3
 aiohttp==3.9.5 
+aiofiles==23.2.1
