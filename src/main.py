@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Union, List
 from dotenv import load_dotenv
 from web3 import Web3
-from poa_middleware import geth_poa_middleware
+from .poa_middleware import geth_poa_middleware
 from web3.exceptions import ContractLogicError
 from decimal import Decimal, getcontext
 from cachetools import TTLCache
