@@ -119,6 +119,7 @@ app = FastAPI(
 )
 
 
+# Add rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 
@@ -446,6 +447,10 @@ def get_cached_balance(address: str, chain_id: int) -> int:
     balance_cache[cache_key] = balance
     return balance
 
+# In main.py
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse('static/favicon.ico')
 
 # API Endpoints
 @app.get("/", summary="Service Status", tags=["Health Check"])
