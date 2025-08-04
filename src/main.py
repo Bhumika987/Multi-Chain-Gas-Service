@@ -258,22 +258,30 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
     chain = CHAIN_MAP.get(chain_id)
     if not chain:
         raise ValueError(f"Chain ID {chain_id} not supported")
-   
+    
     rpc_url = chain["rpcUrl"]
     if not rpc_url:
         raise ValueError(f"No RPC URL configured for chain {chain_id}")
-   
+    
     for attempt in range(3):
         try:
-            w3 = Web3(Web3.HTTPProvider(rpc_url),
-                     request_kwargs={'timeout': 10} ))
-           
+            # Fixed parenthesis and added POA middleware flag
+            w3 = Web3(Web3.HTTPProvider(
+                rpc_url,
+                request_kwargs={'timeout': 10}  # Fixed syntax
+            ))
+            
             if w3.isConnected():
+                # Auto-inject POA middleware for supported chains
+                if chain.get("isPOA", False):
+                    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
                 return w3
+                
             time.sleep(1)
         except Exception as e:
             print(f"Connection attempt {attempt + 1} failed: {str(e)}")
-            time.sleep(2 ** attempt) 
+            time.sleep(2 ** attempt)  # Exponential backoff
+    
     raise ConnectionError(f"Could not connect to chain {chain_id} at {rpc_url}")
        
 def get_eth_usd_price() -> Optional[float]:
