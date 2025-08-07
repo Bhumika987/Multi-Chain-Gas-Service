@@ -271,10 +271,11 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
                 request_kwargs={'timeout': 10}  # Fixed syntax
             ))
             
-            if w3.isConnected():
-                # Auto-inject POA middleware for supported chains
-                if chain.get("isPOA", False):
-                    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+            # essential middleware
+             w3.middleware_onion.inject(geth_poa_middleware, layer=0) if chain.get("isPOA", False) else None
+            
+            # Verify connection and basic functionality
+            if w3.is_connected() and hasattr(w3, 'from_wei'):
                 return w3
                 
             time.sleep(1)
@@ -282,7 +283,7 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
             print(f"Connection attempt {attempt + 1} failed: {str(e)}")
             time.sleep(2 ** attempt)  # Exponential backoff
     
-    raise ConnectionError(f"Could not connect to chain {chain_id} at {rpc_url}")
+    raise ConnectionError(f"Could not establish proper Web3 connection to chain {chain_id}")
        
 def get_eth_usd_price() -> Optional[float]:
     """Fetch current ETH price in USD with caching"""
