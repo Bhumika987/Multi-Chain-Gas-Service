@@ -4,7 +4,7 @@ uvicorn==0.15.0
 python-dotenv==1.0.0
 
 # Web3 with pinned compatible versions
-web3==5.31.3
+web3>=6.0.0
 eth-abi==2.2.0
 eth-account==0.5.9
 eth-typing==2.3.0
