@@ -427,7 +427,10 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
         if chain_id == 137:  # Polygon
             priority_fee = w3.to_wei(30, 'gwei')  # Polygon typically needs higher tips
         else:
-            priority_fee = w3.eth.max_priority_fee or w3.to_wei(2, 'gwei')
+            try:
+                priority_fee = w3.eth.max_priority_fee()  # Add parentheses
+            except:
+                priority_fee = w3.to_wei(2, 'gwei')
        
         base_fee_gwei = w3.from_wei(base_fee, 'gwei')
         priority_fee_gwei = w3.from_wei(priority_fee, 'gwei')
@@ -532,16 +535,22 @@ async def get_gas_prices(
         eip1559: bool = Query(True, description="Include EIP-1559 data when available")
 ):
     """Fetch current network gas prices"""
-    if source == "rpc":
-        try:
-            if eip1559:
-                return get_cached_eip1559_gas(chain_id)
-        except:
-            pass
-        return get_cached_gas_price(chain_id)
-    else:
+   if chain_id not in CHAIN_MAP:
+        raise HTTPException(status_code=400, detail="Unsupported chain ID")
+        
+    if source.lower() != "rpc":  # Case-insensitive check
         raise HTTPException(status_code=400, detail="Unsupported source")
-   
+    
+    try:
+        if eip1559 and CHAIN_MAP[chain_id].get('supportsEIP1559', False):
+            return get_cached_eip1559_gas(chain_id)
+        return get_cached_gas_price(chain_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch gas data: {str(e)}"
+        )
+        
 @app.get("/estimate-fee", response_model=FeeEstimationResponse, summary="Estimate transaction fees", tags=["Transaction"])
 @limiter.limit("20/minute")
 async def estimate_fee(request: Request,
