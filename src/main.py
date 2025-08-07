@@ -255,29 +255,31 @@ class EnhancedGasEstimator:
 # Helper Functions
 def get_web3_connection(chain_id: int = 1) -> Web3:
     """Initialize Web3 for a specific chain with retry mechanism"""
+    from web3.providers import HTTPProvider
+    
     chain = CHAIN_MAP.get(chain_id)
     if not chain:
         raise ValueError(f"Chain ID {chain_id} not supported")
+
+    w3 = Web3(HTTPProvider(
+        chain["rpcUrl"],
+        request_kwargs={'timeout': 10}
+    ))
     
-    rpc_url = chain["rpcUrl"]
-    if not rpc_url:
-        raise ValueError(f"No RPC URL configured for chain {chain_id}")
+    # Essential attribute check
+    if not hasattr(w3, 'from_wei'):
+        # Fallback to manual conversion if Web3 is misconfigured
+        w3.from_wei = lambda x, _: float(x) / 1e18
+        w3.to_wei = lambda x, _: int(float(x) * 1e18)
     
-    for attempt in range(3):
-        try:
-            # Fixed parenthesis and added POA middleware flag
-            w3 = Web3(Web3.HTTPProvider(
-                rpc_url,
-                request_kwargs={'timeout': 10}  # Fixed syntax
-            ))
-            
-            # essential middleware
-             w3.middleware_onion.inject(geth_poa_middleware, layer=0) if chain.get("isPOA", False) else None
-            
-            # Verify connection and basic functionality
-            if w3.is_connected() and hasattr(w3, 'from_wei'):
-                return w3
-                
+    if chain.get("isPOA", False):
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    
+    if not w3.is_connected():
+        raise ConnectionError(f"Could not connect to chain {chain_id}")
+    
+    return w3
+
             time.sleep(1)
         except Exception as e:
             print(f"Connection attempt {attempt + 1} failed: {str(e)}")
