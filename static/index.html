@@ -643,9 +643,14 @@
             const chainId = document.getElementById('gas-chain-id').value;
             const eip1559 = document.getElementById('eip1559').checked;
             
+            if(isNaN(chainId)) {
+                displayError('gas', new Error('Invalid Chain ID'));
+                return;
+                }
+
             try {
                 setLoading(buttonId, true);
-                const response = await fetch(`${API_BASE}/gas?chain_id=${chainId}&eip1559=${eip1559}`);
+                const response = await fetch(`${API_BASE}/gas?source=rpc&chain_id=${chainId}&eip1559=${eip1559}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
