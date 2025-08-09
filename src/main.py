@@ -463,19 +463,6 @@ async def favicon():
     return FileResponse('static/favicon.ico')
 
 
-@app.get("/rpc-health")
-async def rpc_health(chain_id: int = Query(1)):
-    try:
-        w3 = get_web3_connection(chain_id)
-        block = w3.eth.get_block('latest')
-        return {
-            "connected": True,
-            "block_number": block['number'],
-            "latency_ms": w3.provider._request_kwargs['timeout']
-        }
-    except Exception as e:
-        raise HTTPException(502, detail=str(e))
-
 # API Endpoints
 @app.get("/", summary="Service Status", tags=["Health Check"])
 @limiter.limit("60/minute")
@@ -496,6 +483,19 @@ async def health_check(request: Request):
 def render_health_check():
     """Simplified health check for Render monitoring"""
     return {"status": "ok"}
+
+@app.get("/rpc-health")
+async def rpc_health(chain_id: int = Query(1)):
+    try:
+        w3 = get_web3_connection(chain_id)
+        block = w3.eth.get_block('latest')
+        return {
+            "connected": True,
+            "block_number": block['number'],
+            "latency_ms": w3.provider._request_kwargs['timeout']
+        }
+    except Exception as e:
+        raise HTTPException(502, detail=str(e))
 
 
 @app.get("/chains", response_model=SupportedChainsResponse, summary="List supported chains", tags=["Chain Info"])
