@@ -306,13 +306,13 @@ def get_eth_usd_price() -> Optional[float]:
 
 
 def get_legacy_gas(chain_id: int = 1) -> GasPriceResponse:
-    """Fetch legacy gas price from RPC endpoint"""
     try:
         w3 = get_web3_connection(chain_id)
         gas_price = w3.eth.gas_price
-        gwei = w3.from_wei(gas_price, 'gwei')
+        gwei_value = float(gas_price) / 10**9  # Manual wei→gwei conversion
+        
         return GasPriceResponse(
-            legacy=float(gwei),
+            legacy=gwei_value,
             baseFee=None,
             maxPriorityFee=None,
             maxFee=None,
@@ -320,7 +320,11 @@ def get_legacy_gas(chain_id: int = 1) -> GasPriceResponse:
             timestamp=time.time()
         )
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"RPC error: {str(e)}")
+        print(f"Legacy Gas Error: {str(e)}")
+        raise HTTPException(
+            status_code=502, 
+            detail=f"Failed to fetch legacy gas price: {str(e)}"
+        )
 
 
 def get_historical_base_fees(chain_id: int, hours: int = 24) -> List[HistoricalFeeData]:
@@ -416,33 +420,43 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
     try:
         w3 = get_web3_connection(chain_id)
         current_block = w3.eth.get_block('latest')
-       
-        if not CHAIN_MAP[chain_id].get('supportsEIP1559', False):
+        
+        # First check if chain supports EIP-1559
+        if 'baseFeePerGas' not in current_block:
             return get_legacy_gas(chain_id)
-       
+        
         base_fee = current_block['baseFeePerGas']
         store_base_fee(chain_id, current_block['number'], base_fee)
-       
-        # Chain-specific priority fee logic
-        if chain_id == 137:  # Polygon
-            priority_fee = w3.to_wei(30, 'gwei')  # Polygon typically needs higher tips
-        else:
-            priority_fee = w3.eth.max_priority_fee or w3.to_wei(2, 'gwei')
-       
-        base_fee_gwei = w3.from_wei(base_fee, 'gwei')
-        priority_fee_gwei = w3.from_wei(priority_fee, 'gwei')
-        max_fee_gwei = float(base_fee_gwei * 2 + priority_fee_gwei)
-       
+        
+        # Convert wei to gwei safely (works in all Web3.py versions)
+        base_fee_gwei = float(base_fee) / 10**9
+        
+        # Get priority fee with fallback
+        try:
+            priority_fee = w3.eth.max_priority_fee
+        except:
+            priority_fee = 2 * 10**9  # Default 2 Gwei in wei
+            
+        priority_fee_gwei = float(priority_fee) / 10**9
+        
+        # Calculate max fee (2 * base + priority)
+        max_fee_gwei = (2 * base_fee_gwei) + priority_fee_gwei
+        
         return GasPriceResponse(
             legacy=None,
-            baseFee=float(base_fee_gwei),
-            maxPriorityFee=float(priority_fee_gwei),
-            maxFee=float(max_fee_gwei),
+            baseFee=base_fee_gwei,
+            maxPriorityFee=priority_fee_gwei,
+            maxFee=max_fee_gwei,
             source="rpc",
             timestamp=time.time()
         )
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"RPC error: {str(e)}")
+        print(f"EIP-1559 Gas Error: {str(e)}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch EIP-1559 gas data: {str(e)}"
+        )
+        
 
 
 def get_cached_balance(address: str, chain_id: int) -> int:
@@ -496,6 +510,22 @@ async def rpc_health(chain_id: int = Query(1)):
         }
     except Exception as e:
         raise HTTPException(502, detail=str(e))
+
+@app.get("/debug/gas")
+async def debug_gas(chain_id: int = Query(1)):
+    try:
+        w3 = get_web3_connection(chain_id)
+        block = w3.eth.get_block('latest')
+        
+        return {
+            "block_number": block['number'],
+            "base_fee_exists": 'baseFeePerGas' in block,
+            "gas_price": str(w3.eth.gas_price),
+            "max_priority_fee": str(getattr(w3.eth, 'max_priority_fee', 'Not available')),
+            "methods": dir(w3.eth)
+        }
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
 
 
 @app.get("/chains", response_model=SupportedChainsResponse, summary="List supported chains", tags=["Chain Info"])
