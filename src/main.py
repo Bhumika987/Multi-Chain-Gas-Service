@@ -510,7 +510,7 @@ async def rpc_health(chain_id: int = Query(1)):
     except Exception as e:
         raise HTTPException(502, detail=str(e))
 
-@app.get("/debug/gas")
+@app.get("/debug/gas",  response_model=GasPriceResponse, summary="Current Gas Price", tags=["Gas Data"])
 async def debug_gas(chain_id: int = Query(1)):
     try:
         w3 = get_web3_connection(chain_id)
