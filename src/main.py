@@ -420,33 +420,29 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
         w3 = get_web3_connection(chain_id)
         current_block = w3.eth.get_block('latest')
         
-        # First verify EIP-1559 support properly
+        # Debug: Print block structure
+        print(f"Block data keys: {current_block.keys()}")  # Add this line
+        
         if 'baseFeePerGas' not in current_block:
+            print("EIP-1559 not active in this block")  # Debug
             return get_legacy_gas(chain_id)
         
         base_fee = current_block['baseFeePerGas']
-        store_base_fee(chain_id, current_block['number'], base_fee)
+        print(f"Raw baseFeePerGas: {base_fee}")  # Debug
         
-        # Convert all values from wei to gwei
-        base_fee_gwei = float(base_fee) / 10**9
+        # Manual conversion (wei → gwei)
+        base_fee_gwei = float(base_fee) / 1_000_000_000
         
-        # Priority fee with multiple fallbacks
-        priority_fee = None
-        if hasattr(w3.eth, 'max_priority_fee'):  # Check if method exists
-            try:
-                priority_fee = w3.eth.max_priority_fee
-            except:
-                pass
+        # Priority fee with direct RPC call fallback
+        try:
+            priority_fee = w3.eth._max_priority_fee()  # Alternative method
+        except:
+            priority_fee = 2_000_000_000  # Default 2 Gwei in wei
         
-        if priority_fee is None:
-            # Chain-specific defaults
-            if chain_id == 137:  # Polygon
-                priority_fee = 30 * 10**9  # 30 Gwei
-            else:
-                priority_fee = 2 * 10**9  # 2 Gwei default
-        
-        priority_fee_gwei = float(priority_fee) / 10**9
+        priority_fee_gwei = float(priority_fee) / 1_000_000_000
         max_fee_gwei = (2 * base_fee_gwei) + priority_fee_gwei
+        
+        print(f"Calculated fees - Base: {base_fee_gwei}, Priority: {priority_fee_gwei}")  # Debug
         
         return GasPriceResponse(
             legacy=None,
@@ -457,9 +453,8 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
             timestamp=time.time()
         )
     except Exception as e:
-        print(f"EIP-1559 Gas Error: {str(e)}")
-        # Fallback to legacy if EIP-1559 fails
-        return get_legacy_gas(chain_id)
+        print(f"EIP-1559 Error: {type(e).__name__}: {str(e)}")  # Detailed error
+        return get_legacy_gas(chain_id)  # Fallback
         
 
 
