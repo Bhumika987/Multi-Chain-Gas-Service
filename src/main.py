@@ -417,43 +417,49 @@ def get_cached_eip1559_gas(chain_id: int) -> GasPriceResponse:
     eip1559_cache[cache_key] = gas_data
     return gas_data
 
-
 def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
     try:
         w3 = get_web3_connection(chain_id)
         current_block = w3.eth.get_block('latest')
         
+        # First verify EIP-1559 support properly
         if 'baseFeePerGas' not in current_block:
+            print(f"Chain {chain_id} doesn't support EIP-1559, falling back to legacy")
             return get_legacy_gas(chain_id)
         
-        base_fee = current_block['baseFeePerGas']
+        base_fee = current_block.get('baseFeePerGas')
+        if base_fee is None:
+            print(f"EIP-1559 block missing baseFeePerGas, using legacy")
+            return get_legacy_gas(chain_id)
+            
         store_base_fee(chain_id, current_block['number'], base_fee)
         
         # Convert wei to gwei
         base_fee_gwei = float(base_fee) / 10**9
         
-        # Improved priority fee calculation
+        # Priority fee with robust fallbacks
+        priority_fee = None
         try:
-            # First try the direct method
             priority_fee = w3.eth.max_priority_fee
+            # Validate priority fee is reasonable (0.1 - 100 gwei)
+            if not (10**8 <= priority_fee <= 100 * 10**9):
+                print(f"Priority fee {priority_fee} out of bounds, using default")
+                priority_fee = None
+        except:
+            pass
             
-            # Validate the returned value (typical range 1-100 gwei)
-            if priority_fee < 10**8 or priority_fee > 100 * 10**9:  # 0.1 - 100 gwei range
-                raise ValueError("Priority fee out of expected range")
-                
-        except Exception as e:
-            print(f"Using fallback priority fee: {str(e)}")
-            # Chain-specific fallbacks
-            if chain_id == 1:  # Ethereum Mainnet
-                priority_fee = 2 * 10**9  # 2 gwei default
+        if priority_fee is None:
+            # Chain-specific defaults
+            if chain_id == 1:  # Ethereum
+                priority_fee = 2 * 10**9  # 2 gwei
             elif chain_id == 137:  # Polygon
-                priority_fee = 30 * 10**9  # 30 gwei default
+                priority_fee = 30 * 10**9  # 30 gwei
             else:
                 priority_fee = 1.5 * 10**9  # 1.5 gwei default
         
         priority_fee_gwei = float(priority_fee) / 10**9
         
-        # Calculate max fee (next block's base fee could be up to 12.5% higher)
+        # Calculate max fee (next block could be 12.5% higher)
         max_fee_gwei = (base_fee_gwei * 1.125) + priority_fee_gwei
         
         return GasPriceResponse(
@@ -466,7 +472,8 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
         )
     except Exception as e:
         print(f"EIP-1559 Gas Error: {str(e)}")
-        raise HTTPException(502, detail=f"Failed to fetch EIP-1559 gas: {str(e)}")
+        # Fallback to legacy if EIP-1559 fails
+        return get_legacy_gas(chain_id)
         
 
 
