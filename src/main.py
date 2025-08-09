@@ -462,6 +462,20 @@ def get_cached_balance(address: str, chain_id: int) -> int:
 async def favicon():
     return FileResponse('static/favicon.ico')
 
+
+@app.get("/rpc-health")
+async def rpc_health(chain_id: int = Query(1)):
+    try:
+        w3 = get_web3_connection(chain_id)
+        block = w3.eth.get_block('latest')
+        return {
+            "connected": True,
+            "block_number": block['number'],
+            "latency_ms": w3.provider._request_kwargs['timeout']
+        }
+    except Exception as e:
+        raise HTTPException(502, detail=str(e))
+
 # API Endpoints
 @app.get("/", summary="Service Status", tags=["Health Check"])
 @limiter.limit("60/minute")
