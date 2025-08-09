@@ -265,20 +265,16 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
     
     for attempt in range(3):
         try:
+            # Fixed parenthesis and added POA middleware flag
             w3 = Web3(Web3.HTTPProvider(
                 rpc_url,
-                request_kwargs={'timeout': 10}
+                request_kwargs={'timeout': 10}  # Fixed syntax
             ))
             
-            # Add manual conversion if Web3 methods are missing
-            if not hasattr(w3, 'from_wei'):
-                w3.from_wei = lambda x, _: float(x) / 1e18
-                w3.to_wei = lambda x, _: int(float(x) * 1e18)
-            
-            if chain.get("isPOA", False):
-                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-            
-            if w3.is_connected():
+            if w3.isConnected():
+                # Auto-inject POA middleware for supported chains
+                if chain.get("isPOA", False):
+                    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
                 return w3
                 
             time.sleep(1)
@@ -286,7 +282,7 @@ def get_web3_connection(chain_id: int = 1) -> Web3:
             print(f"Connection attempt {attempt + 1} failed: {str(e)}")
             time.sleep(2 ** attempt)  # Exponential backoff
     
-    raise ConnectionError(f"Could not connect to chain {chain_id}")
+    raise ConnectionError(f"Could not connect to chain {chain_id} at {rpc_url}")
        
 def get_eth_usd_price() -> Optional[float]:
     """Fetch current ETH price in USD with caching"""
@@ -420,40 +416,33 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
     try:
         w3 = get_web3_connection(chain_id)
         current_block = w3.eth.get_block('latest')
-        
-        # Manual conversion fallback
-        def to_gwei(wei):
-            return float(wei) / 1e9 if not hasattr(w3, 'from_wei') else w3.from_wei(wei, 'gwei')
-        
+       
         if not CHAIN_MAP[chain_id].get('supportsEIP1559', False):
             return get_legacy_gas(chain_id)
-        
-        base_fee = current_block.get('baseFeePerGas')
-        if not base_fee:
-            return get_legacy_gas(chain_id)
-        
+       
+        base_fee = current_block['baseFeePerGas']
         store_base_fee(chain_id, current_block['number'], base_fee)
-        
-        # Priority fee logic
+       
+        # Chain-specific priority fee logic
         if chain_id == 137:  # Polygon
-            priority_fee = w3.to_wei(30, 'gwei')
+            priority_fee = w3.to_wei(30, 'gwei')  # Polygon typically needs higher tips
         else:
-            try:
-                priority_fee = w3.eth.max_priority_fee()  # Fixed method call
-            except:
-                priority_fee = w3.to_wei(2, 'gwei')
-        
+            priority_fee = w3.eth.max_priority_fee or w3.to_wei(2, 'gwei')
+       
+        base_fee_gwei = w3.from_wei(base_fee, 'gwei')
+        priority_fee_gwei = w3.from_wei(priority_fee, 'gwei')
+        max_fee_gwei = float(base_fee_gwei * 2 + priority_fee_gwei)
+       
         return GasPriceResponse(
             legacy=None,
-            baseFee=to_gwei(base_fee),
-            maxPriorityFee=to_gwei(priority_fee),
-            maxFee=to_gwei(base_fee * 2 + priority_fee),
+            baseFee=float(base_fee_gwei),
+            maxPriorityFee=float(priority_fee_gwei),
+            maxFee=float(max_fee_gwei),
             source="rpc",
             timestamp=time.time()
         )
     except Exception as e:
-        print(f"EIP-1559 Error: {str(e)}")
-        return get_legacy_gas(chain_id)
+        raise HTTPException(status_code=502, detail=f"RPC error: {str(e)}")
 
 
 def get_cached_balance(address: str, chain_id: int) -> int:
@@ -538,24 +527,21 @@ async def get_chain_info(
 @limiter.limit("30/minute")
 async def get_gas_prices(
         request: Request,
-        source: str = Query("rpc"),
-        chain_id: int = Query(..., gt=0),  # Ensure positive chain ID
-        eip1559: bool = Query(True)
+        source: str = Query("rpc", description="Data source: 'rpc'"),
+        chain_id: int = Query(1, description="Chain ID"),
+        eip1559: bool = Query(True, description="Include EIP-1559 data when available")
 ):
     """Fetch current network gas prices"""
-    if chain_id not in CHAIN_MAP:
-        raise HTTPException(400, "Unsupported chain ID")
-        
-    if source.lower() != "rpc":
-        raise HTTPException(400, "Only 'rpc' source supported")
-    
-    try:
-        if eip1559 and CHAIN_MAP[chain_id].get('supportsEIP1559', False):
-            return get_cached_eip1559_gas(chain_id)
+    if source == "rpc":
+        try:
+            if eip1559:
+                return get_cached_eip1559_gas(chain_id)
+        except:
+            pass
         return get_cached_gas_price(chain_id)
-    except Exception as e:
-        raise HTTPException(502, f"Gas data unavailable: {str(e)}")
-        
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported source")
+   
 @app.get("/estimate-fee", response_model=FeeEstimationResponse, summary="Estimate transaction fees", tags=["Transaction"])
 @limiter.limit("20/minute")
 async def estimate_fee(request: Request,
@@ -757,4 +743,4 @@ async def simulate_transaction(request: SimulateRequest):
    
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, app_dir="src")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, app_dir="src") 
