@@ -420,25 +420,32 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
         w3 = get_web3_connection(chain_id)
         current_block = w3.eth.get_block('latest')
         
-        # First check if chain supports EIP-1559
+        # First verify EIP-1559 support properly
         if 'baseFeePerGas' not in current_block:
             return get_legacy_gas(chain_id)
         
         base_fee = current_block['baseFeePerGas']
         store_base_fee(chain_id, current_block['number'], base_fee)
         
-        # Convert wei to gwei safely (works in all Web3.py versions)
+        # Convert all values from wei to gwei
         base_fee_gwei = float(base_fee) / 10**9
         
-        # Get priority fee with fallback
-        try:
-            priority_fee = w3.eth.max_priority_fee
-        except:
-            priority_fee = 2 * 10**9  # Default 2 Gwei in wei
-            
-        priority_fee_gwei = float(priority_fee) / 10**9
+        # Priority fee with multiple fallbacks
+        priority_fee = None
+        if hasattr(w3.eth, 'max_priority_fee'):  # Check if method exists
+            try:
+                priority_fee = w3.eth.max_priority_fee
+            except:
+                pass
         
-        # Calculate max fee (2 * base + priority)
+        if priority_fee is None:
+            # Chain-specific defaults
+            if chain_id == 137:  # Polygon
+                priority_fee = 30 * 10**9  # 30 Gwei
+            else:
+                priority_fee = 2 * 10**9  # 2 Gwei default
+        
+        priority_fee_gwei = float(priority_fee) / 10**9
         max_fee_gwei = (2 * base_fee_gwei) + priority_fee_gwei
         
         return GasPriceResponse(
@@ -451,10 +458,8 @@ def get_eip1559_gas(chain_id: int = 1) -> GasPriceResponse:
         )
     except Exception as e:
         print(f"EIP-1559 Gas Error: {str(e)}")
-        raise HTTPException(
-            status_code=502,
-            detail=f"Failed to fetch EIP-1559 gas data: {str(e)}"
-        )
+        # Fallback to legacy if EIP-1559 fails
+        return get_legacy_gas(chain_id)
         
 
 
@@ -566,24 +571,35 @@ async def get_chain_info(
         raise HTTPException(status_code=500, detail=f"Failed to fetch chain info: {str(e)}")
 
 
-@app.get("/gas", response_model=GasPriceResponse, summary="Get current gas prices", tags=["Gas Data"])
+@app.get("/gas", response_model=GasPriceResponse)
 @limiter.limit("30/minute")
 async def get_gas_prices(
         request: Request,
-        source: str = Query("rpc", description="Data source: 'rpc'"),
-        chain_id: int = Query(1, description="Chain ID"),
-        eip1559: bool = Query(True, description="Include EIP-1559 data when available")
+        source: str = Query("rpc"),
+        chain_id: int = Query(1),
+        eip1559: bool = Query(True)
 ):
-    """Fetch current network gas prices"""
-    if source == "rpc":
-        try:
-            if eip1559:
-                return get_cached_eip1559_gas(chain_id)
-        except:
-            pass
-        return get_cached_gas_price(chain_id)
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported source")
+    try:
+        if source != "rpc":
+            raise HTTPException(400, detail="Only RPC source supported")
+            
+        w3 = get_web3_connection(chain_id)
+        current_block = w3.eth.get_block('latest')
+        
+        # Force legacy if chain doesn't support EIP-1559
+        if 'baseFeePerGas' not in current_block:
+            eip1559 = False
+            
+        if eip1559:
+            try:
+                return get_eip1559_gas(chain_id)
+            except Exception as e:
+                print(f"EIP-1559 fallback to legacy: {str(e)}")
+                
+        return get_legacy_gas(chain_id)
+        
+    except Exception as e:
+        raise HTTPException(502, detail=f"Gas data unavailable: {str(e)}")
    
 @app.get("/estimate-fee", response_model=FeeEstimationResponse, summary="Estimate transaction fees", tags=["Transaction"])
 @limiter.limit("20/minute")
